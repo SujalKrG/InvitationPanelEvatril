@@ -32,6 +32,14 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: true,
       },
+      event_profile_theme: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      user_preview_theme: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
     {
       tableName: "occasions",
