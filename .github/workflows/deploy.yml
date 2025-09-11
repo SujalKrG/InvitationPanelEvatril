@@ -1,0 +1,47 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main # yaha apni branch ka naam do (jaise main/master)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup SSH key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            cd ~/app || mkdir -p ~/app && cd ~/app
+
+            # Purana code delete karke naya laana
+            rm -rf * .[!.]*
+
+            # GitHub se code fetch karna (tumhara repo ka URL lagana hoga)
+            git clone https://github.com/SujalKrG/demoAuthEva.git temp
+            mv temp/* temp/.[!.]* ./
+            rm -rf temp
+
+            # .env file banana from GitHub Secrets
+            echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+            echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+            echo "DB_PASS=${{ secrets.DB_PASS }}" >> .env
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+
+            # Node.js dependencies install
+            npm install --production
+
+            # PM2 ya nohup se server restart
+            pm2 stop all || true
+            pm2 start index.js --name my-backend
+          EOF

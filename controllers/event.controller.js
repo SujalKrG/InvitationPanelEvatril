@@ -129,7 +129,7 @@ export const createEventTextOnly = async (req, res) => {
 
     const occasion = await Occasion.findOne({
       where: { id: occasion_id, invitation_status: true },
-      attributes: ["id", "slug"],
+      attributes: ["id", "slug", "title_suffix"],
     });
     if (!occasion)
       return res.status(404).json({ message: "Occasion not found" });
@@ -168,7 +168,7 @@ export const createEventTextOnly = async (req, res) => {
       }
     }
 
-    const title = getEventTitle(occasion.slug, occasion_data || {});
+    const title = getEventTitle(occasion, occasion_data || {});
     const eventSlug = generateEventSlug(title);
 
     const newEvent = await Event.create({

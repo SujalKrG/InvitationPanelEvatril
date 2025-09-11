@@ -20,6 +20,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      title_suffix: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       category: {
         type: DataTypes.TINYINT,
         allowNull: true,

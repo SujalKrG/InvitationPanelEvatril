@@ -1,51 +1,75 @@
+// utils/eventUtils.js
 import slugify from "slugify";
 
-//! Title templates for different occasions
-const TITLE_TEMPLATE = {
-  wedding: (data) => {
-    const bride = data.bride_name ?? "Bride";
-    const groom = data.groom_name ?? "Groom";
-    if (data.who_is_creating === "bride") {
-      return `${bride} & ${groom} Wedding Ceremony`;
-    }
-    return `${groom} & ${bride} Wedding Ceremony`;
-  },
-  anniversary: (data) =>
-    `${data.name1 ?? "Name1"} & ${
-      data.name2 ?? "Name2"
-    } Anniversary Celebration`,
-  birthday: (data) => `${data.name}'s Birthday Celebration`,
-  "engagement-ceremony": (data) =>
-    `${data.groom_name} & ${data.bride_name} Engagement Party`,
-  "baby-shower": (data) => `${data.mother_name}'s Baby Shower`,
-  graduation: (data) => `${data.name}'s Graduation Ceremony`,
-  default: (data) => `Custom Event`,
+// Detect type of occasion based on slug
+const detectOccasionType = (occasionRow = {}) => {
+  const raw = String(
+    occasionRow?.slug || occasionRow?.key || occasionRow?.name || ""
+  ).toLowerCase();
+
+  if (raw.includes("wedding")) return "wedding";
+  if (raw.includes("engagement")) return "engagement";
+  if (raw.includes("anniversary")) return "anniversary";
+  return "single";
 };
 
-const normalizeSlug = (slug) => {
-  if (slug.includes("wedding")) return "wedding";
+// Join two names with " & " or fallback
+const joinTwo = (a = "", b = "") => {
+  const A = a.trim();
+  const B = b.trim();
+  if (A && B) return `${A} & ${B}`;
+  return A || B || "";
 };
 
-//! Get event title based on occasion and data
-export const getEventTitle = (occasionSlug, occasionData) => {
-  const normalized = normalizeSlug(occasionSlug);
-  const template = TITLE_TEMPLATE[normalized] || TITLE_TEMPLATE["default"];
-  return template ? template(occasionData) : "Unknown Event";
+// Build the name part according to type
+export const buildNamePart = (occasionRow = {}, payload = {}) => {
+  const type = detectOccasionType(occasionRow);
+
+  if (type === "wedding") {
+    const bride = payload.bride_name?.trim() || "";
+    const groom = payload.groom_name?.trim() || "";
+    const who = (payload.who_is_creating || "").toLowerCase();
+
+    return who === "bride" ? joinTwo(bride, groom) : joinTwo(groom, bride);
+  }
+
+  if (type === "engagement") {
+    const brideToBe = payload.bride_to_be_name?.trim() || "";
+    const groomToBe = payload.groom_to_be_name?.trim() || "";
+    const who = (payload.who_is_creating || "").toLowerCase();
+
+    return who === "bride_to_be" || who === "bride"
+      ? joinTwo(brideToBe, groomToBe)
+      : joinTwo(groomToBe, brideToBe);
+  }
+
+  if (type === "anniversary") {
+    const n1 = payload.name1?.trim() || "";
+    const n2 = payload.name2?.trim() || "";
+    return joinTwo(n1, n2);
+  }
+
+  // default single-name occasions
+  return payload.name?.trim() || "Guest";
 };
 
-//! Generate a unique slug for the event
+// Build full event title using DB suffix
+export const getEventTitle = (occasionRow = {}, payload = {}) => {
+  const suffix = (
+    occasionRow?.title_suffix ||
+    occasionRow?.titleSuffix ||
+    "Event"
+  ).trim();
+  const namePart = buildNamePart(occasionRow, payload) || "Guest";
+  return `${namePart} ${suffix}`.trim();
+};
+
+// Generate slug from title
 export const generateEventSlug = (title) => {
-  const suffix = (Date.now() % 100000) + Math.floor(Math.random() * 90 + 10);
-  const cleanTitle = title.replace(/&/g, " "); // replace & with space
-  return slugify(cleanTitle, { lower: true, strict: true }) + "-" + suffix;
+  const unique = `${Date.now() % 100000}${Math.floor(Math.random() * 90 + 10)}`;
+  const clean = title.replace(/&/g, " ");
+  const base = slugify(clean, { lower: true, strict: true }) || "event";
+  return `${base}-${unique}`;
 };
 
-// Debug example
-const title = getEventTitle("wedding", {
-  who_is_creating: "groom",
-  bride_name: "Priya",
-  groom_name: "Rahul",
-});
-console.log(
-  "http://localhost:8000/occasion/hindu-wedding/" + generateEventSlug(title)
-);
+export default { buildNamePart, getEventTitle, generateEventSlug };

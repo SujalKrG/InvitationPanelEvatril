@@ -12,6 +12,7 @@ export default class OccasionResource {
     this.name = OccasionResource.cleanString(occasion.name);
     this.slug = occasion.slug;
     this.image = occasion.image;
+    this.title_suffix = occasion.title_suffix;
     this.category = {
       id: occasion.category,
       name: OCCASIONS_CATEGORY[occasion.category] || "Unknown Category",
