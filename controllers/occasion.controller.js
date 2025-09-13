@@ -5,6 +5,11 @@ const { OccasionField, Occasion } = db;
 
 // ✅ GET /api/v1/get-occasions
 export const getOccasions = async (req, res, next) => {
+  console.log("DB keys:", Object.keys(db));
+  console.log(
+    "DB.remote keys:",
+    db.remote ? Object.keys(db.remote) : "no remote"
+  );
   try {
     const occasions = await Occasion.findAll({
       where: { invitation_status: true },
@@ -56,7 +61,7 @@ export const getOccasionFieldsBySlug = async (req, res, next) => {
         label: f.label,
         type: f.type,
         required: f.required,
-        options: f.options,
+        option: f.option,
         orderNo: f.order_no,
       })),
     };

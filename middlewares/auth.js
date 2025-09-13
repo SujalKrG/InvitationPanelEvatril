@@ -6,6 +6,9 @@ const { User } = db;
 export const authenticateUser = async (req, res, next) => {
   try {
     let token = null;
+    console.log("[AUTH] headers:", req.headers);
+    // existing token extraction...
+    console.log("[AUTH] resolved token:", !!token ? "[present]" : "[missing]");
 
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -28,8 +31,13 @@ export const authenticateUser = async (req, res, next) => {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 5000,
       });
+      console.log("[AUTH] auth service status:", verifyRes.status);
     } catch (error) {
       if (error.response?.status === 401) {
+        console.error(
+          "[AUTH] auth service error:",
+          error?.response?.status || error.message
+        );
         return res.status(401).json({ message: "Unauthorized: Invalid token" });
       }
       console.error("Auth service error:", error.message || error);
@@ -48,6 +56,7 @@ export const authenticateUser = async (req, res, next) => {
 
     req.user = user; // Attach user to request object
     req.authToken = data?.token || token;
+    console.log("[AUTH] verified user id:", user?.id);
     next();
   } catch (error) {
     console.error("Error authenticating user:", error);

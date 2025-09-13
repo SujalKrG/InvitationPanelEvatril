@@ -27,7 +27,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
       },
-      options: {
+      option: {
         type: DataTypes.JSON,
         allowNull: true,
       },

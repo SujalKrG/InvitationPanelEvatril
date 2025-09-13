@@ -1,5 +1,9 @@
 import db from "../models/index.js";
-import { getEventTitle, generateEventSlug } from "../utils/eventUtils.js";
+import {
+  getEventTitle,
+  generateEventSlug,
+  toTitleCase,
+} from "../utils/eventUtils.js";
 
 const { Event, Occasion } = db;
 
@@ -148,6 +152,26 @@ export const createEventTextOnly = async (req, res) => {
 
     const preservedData = { ...dynamicFields };
 
+    // capitalize name fields if present
+    if (preservedData.bride_name)
+      preservedData.bride_name = toTitleCase(preservedData.bride_name);
+    if (preservedData.groom_name)
+      preservedData.groom_name = toTitleCase(preservedData.groom_name);
+    if (preservedData.bride_to_be_name)
+      preservedData.bride_to_be_name = toTitleCase(
+        preservedData.bride_to_be_name
+      );
+    if (preservedData.groom_to_be_name)
+      preservedData.groom_to_be_name = toTitleCase(
+        preservedData.groom_to_be_name
+      );
+    if (preservedData.name1)
+      preservedData.name1 = toTitleCase(preservedData.name1);
+    if (preservedData.name2)
+      preservedData.name2 = toTitleCase(preservedData.name2);
+    if (preservedData.name)
+      preservedData.name = toTitleCase(preservedData.name);
+
     // Remove any keys that match expectedPhotoKeys from preservedData
     for (const k of expectedPhotoKeys) {
       if (k in preservedData) delete preservedData[k];
@@ -175,7 +199,7 @@ export const createEventTextOnly = async (req, res) => {
       user_id: userId,
       occasion_id,
       event_datetime,
-      venue_name,
+      venue_name: venue_name ? toTitleCase(venue_name) : venue_name,
       venue_address,
       occasion_data,
       title,

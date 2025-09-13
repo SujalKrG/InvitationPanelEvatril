@@ -1,5 +1,26 @@
-// utils/eventUtils.js
 import slugify from "slugify";
+
+// small title-casing helper
+export const toTitleCase = (str = "") => {
+  if (!str || typeof str !== "string") return "";
+  // normalize whitespace, trim
+  const cleaned = str.trim().replace(/\s+/g, " ");
+
+  // split on spaces but keep internal hyphens as part of words (e.g., "mother-in-law")
+  return cleaned
+    .split(" ")
+    .map((token) =>
+      token
+        .split("-") // handle hyphenated words
+        .map((part) =>
+          part.length === 1
+            ? part.toUpperCase()
+            : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+        )
+        .join("-")
+    )
+    .join(" ");
+};
 
 // Detect type of occasion based on slug
 const detectOccasionType = (occasionRow = {}) => {
@@ -55,12 +76,14 @@ export const buildNamePart = (occasionRow = {}, payload = {}) => {
 
 // Build full event title using DB suffix
 export const getEventTitle = (occasionRow = {}, payload = {}) => {
-  const suffix = (
-    occasionRow?.title_suffix ||
-    occasionRow?.titleSuffix ||
-    "Event"
+  const suffixRaw = String(
+    occasionRow?.title_suffix || occasionRow?.titleSuffix || "Event"
   ).trim();
-  const namePart = buildNamePart(occasionRow, payload) || "Guest";
+  const namePartRaw = buildNamePart(occasionRow, payload) || "Guest";
+
+  const namePart = toTitleCase(namePartRaw);
+  const suffix = toTitleCase(suffixRaw);
+
   return `${namePart} ${suffix}`.trim();
 };
 
@@ -72,4 +95,4 @@ export const generateEventSlug = (title) => {
   return `${base}-${unique}`;
 };
 
-export default { buildNamePart, getEventTitle, generateEventSlug };
+export default { buildNamePart, getEventTitle, generateEventSlug, toTitleCase };
