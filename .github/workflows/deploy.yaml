@@ -71,4 +71,4 @@ jobs:
             # Show PM2 status
             pm2 list
             pm2 status
-            EOF
+            
