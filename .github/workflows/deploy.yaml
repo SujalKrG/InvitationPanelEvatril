@@ -59,14 +59,16 @@ jobs:
             export AWS_BUCKET=${{ secrets.AWS_BUCKET }}
             export PORT=${{ secrets.PORT }}
 
-            # Start / Reload app and workers
-            pm2 describe myapp > /dev/null
-            if [ $? -eq 0 ]; then
-              pm2 restart myapp --update-env
-              pm2 restart image-worker --update-env || pm2 start ./worker.mjs --name image-worker
-            else
-              pm2 start app.js --name myapp
-              pm2 start ./worker.mjs --name image-worker
-            fi
+            # Stop & delete existing PM2 apps
+            pm2 delete all || true
+
+            # Start app and workers
+            pm2 start app.js --name myapp
+            pm2 start ./worker.mjs --name image-worker
 
             pm2 save
+
+            # Show PM2 status
+            pm2 list
+            pm2 status
+            EOF
