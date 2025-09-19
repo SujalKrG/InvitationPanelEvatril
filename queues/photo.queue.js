@@ -3,10 +3,32 @@ import fs from "fs/promises";
 import sharp from "sharp";
 import db from "../models/index.js";
 import { uploadToS3, deleteFromS3 } from "../utils/s3.js";
+import { nanoid } from "nanoid";
 
 import { getQueue, redisConnection } from "../lib/queues.js";
 
 const { sequelize } = db;
+
+// Normalize S3 key or URL to a canonical Key string used for comparisons
+const normalizeS3Key = (maybeKeyOrUrl) => {
+  if (!maybeKeyOrUrl) return "";
+  let k = String(maybeKeyOrUrl).trim();
+  try {
+    if (/^https?:\/\//i.test(k)) {
+      const u = new URL(k);
+      k = u.pathname.replace(/^\/+/, "");
+    } else {
+      const awsUrl = (process.env.AWS_URL || "").replace(/\/+$/, "");
+      if (awsUrl && k.startsWith(awsUrl)) {
+        k = k.slice(awsUrl.length).replace(/^\/+/, "");
+      }
+      k = k.replace(/^\/+/, "");
+    }
+  } catch (e) {
+    // fallback – keep original string
+  }
+  return k;
+};
 
 export const photoQueue = getQueue("photo-queue");
 export const photoDLQ = getQueue("photo-dlq");
@@ -124,10 +146,24 @@ export const startPhotoWorker = ({ concurrency = 2 } = {}) => {
         throw error; // let BullMQ retry
       }
 
+      const safeBase = (originalName || `photo-${Date.now()}`)
+        .replace(/\s+/g, "-")
+        .replace(/[^a-zA-Z0-9-_.]/g, "") // remove unsafe chars
+        .replace(/\.[^/.]+$/, ""); // strip existing extension
+      const uploadFilename = `${Date.now()}-${safeBase || "image"}-${nanoid(
+        6
+      )}.webp`;
+
       //? process image with sharp
       let mainBuf;
       try {
-        mainBuf = await sharp(buffer).jpeg({ quality: 75 }).toBuffer();
+        const image = sharp(buffer).rotate();
+        const meta = await image.metadata();
+        const hasAlpha = !!meta.hasAlpha;
+        mainBuf = await image
+          .clone()
+          .webp({ quality: 75, alphaQuality: hasAlpha ? 75 : undefined })
+          .toBuffer();
       } catch (error) {
         console.error(
           `[photo-worker] sharp error job=${job.id}:`,
@@ -135,14 +171,16 @@ export const startPhotoWorker = ({ concurrency = 2 } = {}) => {
         );
         throw error;
       }
+      console.log("original file in bytes: ", buffer.length);
+      console.log("processed file in bytes: ", mainBuf.length);
 
       //? Upload to S3
       let mainUrl;
       try {
         mainUrl = await uploadToS3(
           mainBuf,
-          originalName || `photo-${Date.now()}.jpg`,
-          "image/jpeg",
+          uploadFilename || `photo-${Date.now()}.webp`,
+          "image/webp",
           "events"
         );
       } catch (error) {
@@ -240,17 +278,16 @@ export const startPhotoWorker = ({ concurrency = 2 } = {}) => {
 
           if (previousKey) {
             // If previousKey equals new s3Key or finalUrl, skip deletion
-            if (previousKey === s3Key || previousKey === finalUrl) {
+            const normalizedPrev = normalizeS3Key(previousKey);
+            const normalizedNew = normalizeS3Key(s3Key || finalUrl);
+
+            if (normalizedPrev && normalizedPrev === normalizedNew) {
               console.info(
                 `[photo-worker] previous_key equals new key — skipping delete`,
                 { previousKey, s3Key }
               );
             } else {
-              console.info(`[photo-worker] attempting to delete previous_key`, {
-                previousKey,
-                eventId,
-                field,
-              });
+              // attempt delete...
               try {
                 await deleteFromS3(previousKey);
                 console.info(`[photo-worker] deleted previous S3 object`, {
@@ -263,8 +300,6 @@ export const startPhotoWorker = ({ concurrency = 2 } = {}) => {
                   `[photo-worker] failed to delete previous S3 object`,
                   { previousKey, eventId, field, err: err?.message || err }
                 );
-                // optionally push to DLQ/cleanup queue:
-                // await photoDLQ.add('s3-cleanup', { previousKey, eventId, field, when: new Date().toISOString(), error: String(err?.message || err) });
               }
             }
 

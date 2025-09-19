@@ -4,6 +4,7 @@ import cors from "cors";
 import occasionRoutes from "./routes/occasion.route.js";
 import eventRoutes from "./routes/event.route.js";
 import userRoutes from "./routes/user.route.js";
+import themeRoutes from "./routes/theme.route.js";
 import { verifyS3Connection } from "./utils/s3.js";
 import db from "./models/index.js";
 
@@ -18,6 +19,7 @@ app.use(cors());
 app.use("/api/v1", userRoutes);
 app.use("/api/v1", occasionRoutes);
 app.use("/api/v1", eventRoutes);
+app.use("/api/v1", themeRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

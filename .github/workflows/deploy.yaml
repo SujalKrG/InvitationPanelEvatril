@@ -1,0 +1,72 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          script: |
+            set -e
+            if [ ! -d "app" ]; then
+              git clone https://github.com/SujalKrG/InvitationPanelEvatril.git app
+            fi
+            cd app
+            git reset --hard
+            git pull origin main
+            npm ci --production
+
+            sudo systemctl start redis-server
+            sudo systemctl enable redis-server
+
+            # Export env vars from GitHub Secrets
+            export PRIMARY_DB_HOST=${{ secrets.PRIMARY_DB_HOST }}
+            export PRIMARY_DB_USER=${{ secrets.PRIMARY_DB_USER }}
+            export PRIMARY_DB_PASS=${{ secrets.PRIMARY_DB_PASSWORD }}
+            export PRIMARY_DB_NAME=${{ secrets.PRIMARY_DB_NAME }}
+            export PRIMARY_DB_PORT=${{ secrets.PRIMARY_DB_PORT }}
+
+            export DB2_HOST=${{ secrets.DB2_HOST }}
+            export DB2_USERNAME=${{ secrets.DB2_USERNAME }}
+            export DB2_PASSWORD=${{ secrets.DB2_PASSWORD }}
+            export DB2_PORT=${{ secrets.DB2_PORT }}
+            export DB2_DATABASE=${{ secrets.DB2_DATABASE }}
+            export DB2_CONNECTION=${{ secrets.DB2_CONNECTION }}
+
+            export AUTH_VERIFY_URL=${{ secrets.AUTH_VERIFY_URL }}
+            export PHOTO_WORKER_CONCURRENCY=${{ secrets.PHOTO_WORKER_CONCURRENCY }}
+            export MAX_UPLOAD_BYTES=${{ secrets.MAX_UPLOAD_BYTES }}
+
+            export REDIS_HOST=${{ secrets.REDIS_HOST }}
+            export REDIS_PORT=${{ secrets.REDIS_PORT }}
+
+            export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            export AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}
+            export AWS_BUCKET=${{ secrets.AWS_BUCKET }}
+            export PORT=${{ secrets.PORT }}
+
+            # Start / Reload app and workers
+            pm2 describe myapp > /dev/null
+            if [ $? -eq 0 ]; then
+              pm2 restart myapp --update-env
+              pm2 restart image-worker --update-env || pm2 start ./worker.mjs --name image-worker
+            else
+              pm2 start app.js --name myapp
+              pm2 start ./worker.mjs --name image-worker
+            fi
+
+            pm2 save

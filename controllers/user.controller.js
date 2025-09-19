@@ -9,12 +9,6 @@ export const getEventsByUserId = async (req, res) => {
     const headerUserId = req.headers["x-user-id"] || req.headers["X-User-Id"];
     const authUserId = req.user?.id;
     const userId = authUserId ?? (headerUserId ? Number(headerUserId) : null);
-    console.log(
-      "[EVENTS] hit getEventsByUserId, headers:",
-      req.headers,
-      "req.user:",
-      req.user?.id
-    );
     if (!userId || Number.isNaN(Number(userId))) {
       return res
         .status(400)
@@ -44,7 +38,13 @@ export const getEventsByUserId = async (req, res) => {
 
     const occasions = await Occasion.findAll({
       where: { id: occasionIds },
-      attributes: ["id", "name", "image"],
+      attributes: [
+        "id",
+        "name",
+        "image",
+        "event_profile_theme",
+        "user_preview_theme",
+      ],
     });
 
     // 5) Map occasions by id for quick lookup
@@ -53,6 +53,8 @@ export const getEventsByUserId = async (req, res) => {
         id: occ.id,
         name: OccasionResource.cleanString(occ.name), // ✅ use the cleaner here
         image: occ.image,
+        eventProfileTheme: occ.event_profile_theme,
+        userPreviewTheme: occ.user_preview_theme,
       };
       return acc;
     }, {});

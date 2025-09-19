@@ -221,7 +221,18 @@ export const getEventBySlug = async (req, res) => {
     const { slug } = req.params;
     const event = await Event.findOne({ where: { slug } });
     if (!event) return res.status(404).json({ message: "Not found" });
-    return res.json(event);
+
+    const occasion = await Occasion.findOne({
+      where: { id: event.occasion_id },
+      attributes: ["id", "slug"],
+    });
+
+    const payload = event.toJSON();
+    payload.occasion_slug = occasion?.slug ?? null;
+    // optionally attach full occasion object:
+    // payload.occasion = occasion ? { id: occasion.id, slug: occasion.slug } : null;
+
+    return res.json(payload);
   } catch (err) {
     console.error("getEventBySlug error:", err);
     return res.status(500).json({ message: "Internal server error" });
