@@ -57,6 +57,9 @@ jobs:
             export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             export AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}
             export AWS_BUCKET=${{ secrets.AWS_BUCKET }}
+            export AWS_URL=${{ secrets.AWS_URL }}
+            export AWS_USE_PATH_STYLE_ENDPOINT=${{ secrets.AWS_USE_PATH_STYLE_ENDPOINT }}
+
             export PORT=${{ secrets.PORT }}
 
             # Stop & delete existing PM2 apps
@@ -71,4 +74,3 @@ jobs:
             # Show PM2 status
             pm2 list
             pm2 status
-            
