@@ -35,7 +35,7 @@ jobs:
             # Export env vars from GitHub Secrets
             export PRIMARY_DB_HOST=${{ secrets.PRIMARY_DB_HOST }}
             export PRIMARY_DB_USER=${{ secrets.PRIMARY_DB_USER }}
-            export PRIMARY_DB_PASS=${{ secrets.PRIMARY_DB_PASSWORD }}
+            export PRIMARY_DB_PASS=${{ secrets.PRIMARY_DB_PASS }}
             export PRIMARY_DB_NAME=${{ secrets.PRIMARY_DB_NAME }}
             export PRIMARY_DB_PORT=${{ secrets.PRIMARY_DB_PORT }}
 
