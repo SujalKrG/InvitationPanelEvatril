@@ -1,9 +1,17 @@
 import express from "express";
-
-import { addGuest } from "../controllers/guest.controller.js";
+import { authenticateUser } from "../middlewares/auth.js";
+import {
+  addGuest,
+  editGuest,
+  createGroup,
+  editGroup,
+} from "../controllers/guest.controller.js";
 
 const router = express.Router();
 
-router.post("/guests", addGuest);
+router.post("/guest/add", authenticateUser, addGuest);
+router.patch("/guest/edit/:guestId", authenticateUser, editGuest);
+router.post("/group/create", authenticateUser, createGroup);
+router.patch("/group/edit/:id", authenticateUser, editGroup);
 
 export default router;
