@@ -60,6 +60,20 @@ export const editGuest = async ({ userId, guestId, payload }) => {
   return updated.get ? updated.get({ plain: true }) : updated; // return plain object
 };
 
+export const getGuestsGrouped = async ({ userId }) => {
+  if (!userId) throw ApiError.unauthorized("Missing user");
+
+  // groups (with guests included)
+  const groupsRaw = await groupRepo.findGroupsWithGuestsForUser(userId);
+  const groups = groupsRaw.map((g) => (g.get ? g.get({ plain: true }) : g));
+
+  // unassigned guests
+  const unassigned = await guestRepo.findUnassignedForUser(userId);
+
+  return { groups, unassigned };
+};
+
 export default {
   editGuest,
+  getGuestsGrouped,
 };

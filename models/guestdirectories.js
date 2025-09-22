@@ -41,5 +41,13 @@ export default (sequelize, DataTypes) => {
     }
   );
 
+  // 🔹 Define associations here
+  GuestDirectories.associate = (models) => {
+    GuestDirectories.belongsTo(models.GuestGroups, {
+      foreignKey: "group_id",
+      as: "group",
+    });
+  };
+
   return GuestDirectories;
 };

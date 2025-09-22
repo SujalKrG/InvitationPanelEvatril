@@ -72,6 +72,20 @@ export const addGuest = async (req, res) => {
   }
 };
 
+export const getGuests = async (req, res) => {
+  try {
+    const userId = req.user?.id || Number(req.query.user_id);
+    const payload = await guestService.getGuestsGrouped({ userId });
+    return res.json(payload); // { groups: [...], unassigned: [...] }
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return res.status(error.status).json({ message: error.message });
+    }
+    console.error("getGuests error:", error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
 export const editGuest = async (req, res) => {
   try {
     const userId = req.user?.id || Number(req.body.user_id);

@@ -31,9 +31,20 @@ export const findByIdPlain = async (id, userId) => {
   });
 };
 
+// 🔹 NEW: fetch unassigned guests
+export const findUnassignedForUser = async (userId) => {
+  return GuestDirectories.findAll({
+    where: { user_id: userId, group_id: null },
+    order: [["created_at", "DESC"]],
+    attributes: ["id", "name", "country_code", "phone", "created_at"],
+    raw: true,
+  });
+};
+
 export default {
   findByIdAndUser,
   findByUserCountryPhone,
   updateGuest,
   findByIdPlain,
+  findUnassignedForUser,
 };
