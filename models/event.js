@@ -54,18 +54,18 @@ export default (sequelize, DataTypes) => {
     }
   );
 
-  // ✅ Associations
-  //   Event.associate = (models) => {
-  //     Event.belongsTo(models.User, {
-  //       foreignKey: "user_id",
-  //       as: "user",
-  //     });
+  //✅ Associations
+  // Event.associate = (models) => {
+  //   Event.belongsTo(models.User, {
+  //     foreignKey: "user_id",
+  //     as: "user",
+  //   });
 
-  //     Event.belongsTo(models.Occasion, {
-  //       foreignKey: "occasion_id",
-  //       as: "occasion",
-  //     });
-  //   };
+  //   Event.belongsTo(models.Occasion, {
+  //     foreignKey: "occasion_id",
+  //     as: "occasion",
+  //   });
+  // };
 
   return Event;
 };

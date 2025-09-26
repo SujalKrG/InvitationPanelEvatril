@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <h3>Socket test</h3>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script>
+      const SERVER = "http://localhost:8000"; // change if needed
+      const socket = io(SERVER);
+      const eventId = 1; // set to a real event id in your DB
+
+      socket.on("connect", () => {
+        console.log("connected", socket.id);
+        socket.emit("join-event", eventId);
+        document.body.insertAdjacentHTML(
+          "beforeend",
+          "<div>Connected: " + socket.id + "</div>"
+        );
+      });
+
+      socket.on("new-wish", (data) => {
+        console.log("new-wish", data);
+        document.body.insertAdjacentHTML(
+          "beforeend",
+          "<div><b>new-wish:</b> " + JSON.stringify(data) + "</div>"
+        );
+      });
+
+      socket.on("new-conversation", (data) => {
+        console.log("new-conversation", data);
+        document.body.insertAdjacentHTML(
+          "beforeend",
+          "<div><b>new-conversation:</b> " + JSON.stringify(data) + "</div>"
+        );
+      });
+    </script>
+  </body>
+</html>

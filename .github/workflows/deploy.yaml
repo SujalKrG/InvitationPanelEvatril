@@ -67,7 +67,7 @@ jobs:
 
             # Start app and workers
             pm2 start app.js --name myapp
-            pm2 start ./worker.mjs --name image-worker
+            pm2 start ./workers/eventPhoto.worker.js --name image-worker
 
             pm2 save
 
