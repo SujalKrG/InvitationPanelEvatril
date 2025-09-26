@@ -48,7 +48,9 @@ jobs:
 
             export AUTH_VERIFY_URL=${{ secrets.AUTH_VERIFY_URL }}
             export PHOTO_WORKER_CONCURRENCY=${{ secrets.PHOTO_WORKER_CONCURRENCY }}
+            export USERTHEME_WORKER_CONCURRENCY=${{ secrets.USERTHEME_WORKER_CONCURRENCY }}
             export MAX_UPLOAD_BYTES=${{ secrets.MAX_UPLOAD_BYTES }}
+            export USER_THEME_MAX_BYTES=${{ secrets.USER_THEME_MAX_BYTES }}
 
             export REDIS_HOST=${{ secrets.REDIS_HOST }}
             export REDIS_PORT=${{ secrets.REDIS_PORT }}
@@ -68,6 +70,7 @@ jobs:
             # Start app and workers
             pm2 start app.js --name myapp
             pm2 start ./workers/eventPhoto.worker.js --name image-worker
+            pm2 start ./workers/userTheme.worker.js --name user-theme-worker
 
             pm2 save
 
